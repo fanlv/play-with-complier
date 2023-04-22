@@ -1,0 +1,1 @@
+/Users/fanlv/go/src/gitee.com/fanlv/play-with-complier/craft/target/debug/craft: /Users/fanlv/go/src/gitee.com/fanlv/play-with-complier/craft/src/lexer/mod.rs /Users/fanlv/go/src/gitee.com/fanlv/play-with-complier/craft/src/lexer/simple_lexer.rs /Users/fanlv/go/src/gitee.com/fanlv/play-with-complier/craft/src/main.rs
