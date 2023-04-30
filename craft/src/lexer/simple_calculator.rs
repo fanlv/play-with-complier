@@ -37,13 +37,22 @@ mod tests {
         }
 
 
-        let script = "2+3*5";
-        let lexer = SimpleLexer::new();
-        let mut token_reader = lexer.tokenize(script);
-        lexer.dump(&mut token_reader);
+        // let script = "2+3*5";
+        // let lexer = SimpleLexer::new();
+        // let mut token_reader = lexer.tokenize(script);
+        // lexer.dump(&mut token_reader);
 
         let script = "2+3*5";
-        println!("\n 计算：{} ", script);
+        println!("计算：{} ", script);
+        calculator.evaluate(script);
+
+
+        let script = "2+";
+        println!("计算：{} ", script);
+        calculator.evaluate(script);
+
+        let script = "2+3+4";
+        println!("计算：{} ", script);
         calculator.evaluate(script);
     }
 }
@@ -63,7 +72,10 @@ impl SimpleCalculator {
 
     fn evaluate(&self, code: &str) {
         let tree = self.parse(code);
+        println!("dump ASTTree :");
         tree.dump_ast("");
+        println!(" ");
+
         let _ = self.evaluate_node(&Rc::new(tree), "");
     }
 
@@ -100,6 +112,7 @@ impl SimpleCalculator {
             _ => { println!("found unhandled node: {}", node.get_type()) }
         };
 
+        println!("{}Result: {}",indent,result);
         result
     }
 
@@ -228,16 +241,19 @@ impl SimpleCalculator {
             return Ok(child1);
         }
 
+        // 需要用花括号 , tokens.read 会返回借用，如果返回的 token 不结束，就不能再借用 tokens
+        // 然后会报错 cannot borrow `*tokens` as mutable more than once at a time [E0499]
         let token_text;
         {
             let token1 = tokens.read().unwrap();
             token_text = token1.get_text().clone();
+            // token_text = format!("{}",token.get_text());
         }
 
+        let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token_text);
         let e = io::Error::new(io::ErrorKind::InvalidInput, "invalid additive expression, expecting the right part.");
         let child1 = child1.unwrap();
         let child2 = self.multiplicative(tokens)?.ok_or(e)?;
-        let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token_text);
 
         node.add_child(RefCell::new(Rc::new(child1)));
         node.add_child(RefCell::new(Rc::new(child2)));
@@ -328,7 +344,7 @@ impl SimpleASTNode {
     // }
 
     fn dump_ast(&self, indent: &str) {
-        println!("{} {} {}", indent, self.get_text(), self.get_type());
+        println!("{}{} {}", indent, self.get_text(), self.get_type());
         for child in self.get_children().iter() {
             child.dump_ast(format!("{}\t", indent).as_str());
         }
