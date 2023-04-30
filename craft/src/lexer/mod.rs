@@ -115,8 +115,8 @@ enum DfaState {
 
 
 pub trait ASTNode {
-    // 父节点
-    fn get_parent(&self) -> Option<Rc<Self>>;
+    // // 父节点
+    // fn get_parent(&self) -> Option<Rc<Self>>;
     // 子节点
     fn get_children(&self) -> RefMut<Vec<Rc<Self>>>;
     // AST 类型
