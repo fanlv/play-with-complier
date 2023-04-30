@@ -118,7 +118,7 @@ impl SimpleCalculator {
             _ => { println!("found unhandled node: {}", node.get_type()) }
         };
 
-        println!("{}Result: {}",indent,result);
+        println!("{}Result: {}", indent, result);
         result
     }
 
@@ -192,7 +192,13 @@ impl SimpleCalculator {
     }
 
 
-    // 加法表达式
+    /*
+    加法表达式
+    additiveExpression
+    :   multiplicativeExpression
+    |   additiveExpression Plus multiplicativeExpression
+    ;
+    */
     fn additive<T: TokenReader>(&self, tokens: &mut T) -> Result<Option<SimpleASTNode>, io::Error> {
         let child1 = self.multiplicative(tokens)?;
         let token = tokens.peek();
