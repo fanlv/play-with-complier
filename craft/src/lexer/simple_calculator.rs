@@ -54,6 +54,10 @@ mod tests {
         let script = "2+3+4";
         println!("计算：{} ", script);
         calculator.evaluate(script);
+
+        let script = "1+2+3+4+5*6+8+9+10";
+        println!("计算：{} ", script);
+        calculator.evaluate(script);
     }
 }
 
@@ -70,22 +74,24 @@ impl SimpleCalculator {
         return Err(e);
     }
 
+    // 打印 AST Tree
+    // 打印 计算结果
     fn evaluate(&self, code: &str) {
         let tree = self.parse(code);
         println!("dump ASTTree :");
         tree.dump_ast("");
         println!(" ");
 
-        let _ = self.evaluate_node(&Rc::new(tree), "");
+        let _ = self.calculate_and_print(&Rc::new(tree), "");
     }
 
-    fn evaluate_node<T: ASTNode>(&self, node: &Rc<T>, indent: &str) -> i32 {
+    fn calculate_and_print<T: ASTNode>(&self, node: &Rc<T>, indent: &str) -> i32 {
         let mut result = 0;
         println!("{} Calculating: {}", indent, node.get_type());
         match node.get_type() {
             ASTNodeType::Program => {
                 for child in node.get_children().iter() {
-                    result = self.evaluate_node(child, format!("{}\t", indent).as_str());
+                    result = self.calculate_and_print(child, format!("{}\t", indent).as_str());
                 }
             }
             ASTNodeType::Additive | ASTNodeType::Multiplicative => {
@@ -93,8 +99,8 @@ impl SimpleCalculator {
                 let child1 = children.get(0).expect("child 1 not found");
                 let child2 = children.get(1).expect("child 2 not found");
 
-                let num1 = self.evaluate_node(child1, format!("{}\t", indent).as_str());
-                let num2 = self.evaluate_node(child2, format!("{}\t", indent).as_str());
+                let num1 = self.calculate_and_print(child1, format!("{}\t", indent).as_str());
+                let num2 = self.calculate_and_print(child2, format!("{}\t", indent).as_str());
 
                 match node.get_text() {
                     "+" => result = num1 + num2,
