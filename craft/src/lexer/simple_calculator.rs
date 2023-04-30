@@ -3,8 +3,10 @@ use std::error::Error;
 use std::io;
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
+use std::str::FromStr;
 
-use crate::lexer::{ASTNode, ASTNodeType, TokenReader, TokenType};
+use crate::lexer::{ASTNode, ASTNodeType, simple_lexer, TokenReader, TokenType};
+use crate::simple_calculator;
 
 #[cfg(test)]
 mod tests {
@@ -33,6 +35,16 @@ mod tests {
             }
             Err(error) => println!("Error: {}", error),
         }
+
+
+        let script = "2+3*5";
+        let lexer = SimpleLexer::new();
+        let mut token_reader = lexer.tokenize(script);
+        lexer.dump(&mut token_reader);
+
+        let script = "2+3*5";
+        println!("\n 计算：{} ", script);
+        calculator.evaluate(script);
     }
 }
 
@@ -47,6 +59,71 @@ impl SimpleCalculator {
     fn demo() -> Result<i32, io::Error> {
         let e = io::Error::new(io::ErrorKind::InvalidInput, "variable name expected");
         return Err(e);
+    }
+
+    fn evaluate(&self, code: &str) {
+        let tree = self.parse(code);
+        tree.dump_ast("");
+        let _ = self.evaluate_node(&Rc::new(tree), "");
+    }
+
+    fn evaluate_node<T: ASTNode>(&self, node: &Rc<T>, indent: &str) -> i32 {
+        let mut result = 0;
+        println!("{} Calculating: {}", indent, node.get_type());
+        match node.get_type() {
+            ASTNodeType::Program => {
+                for child in node.get_children().iter() {
+                    result = self.evaluate_node(child, format!("{}\t", indent).as_str());
+                }
+            }
+            ASTNodeType::Additive | ASTNodeType::Multiplicative => {
+                let children = node.get_children();
+                let child1 = children.get(0).expect("child 1 not found");
+                let child2 = children.get(1).expect("child 2 not found");
+
+                let num1 = self.evaluate_node(child1, format!("{}\t", indent).as_str());
+                let num2 = self.evaluate_node(child2, format!("{}\t", indent).as_str());
+
+                match node.get_text() {
+                    "+" => result = num1 + num2,
+                    "-" => result = num1 - num2,
+                    "*" => result = num1 * num2,
+                    "/" => result = num1 / num2,
+                    _ => println!("found unsupported operator: {}", node.get_text()),
+                }
+            }
+            ASTNodeType::IntLiteral => {
+                result = i32::from_str(node.get_text()).unwrap_or_else(|e| {
+                    panic!("parse {} failed {}", node.get_text(), e);
+                });
+            }
+            _ => { println!("found unhandled node: {}", node.get_type()) }
+        };
+
+        result
+    }
+
+    // 解析脚本，并返回根节点
+    fn parse(&self, code: &str) -> SimpleASTNode {
+        let lexer = simple_lexer::SimpleLexer::new();
+        let mut tokens = lexer.tokenize(code);
+        self.get_root(&mut tokens)
+    }
+
+    // 语法解析：根节点
+    fn get_root<T: TokenReader>(&self, tokens: &mut T) -> SimpleASTNode {
+        let node = SimpleASTNode::new(ASTNodeType::Program, "program");
+        let child = self.additive(tokens);
+        match child {
+            Ok(child) => {
+                if !child.is_none() {
+                    node.add_child(RefCell::new(Rc::new(child.unwrap())));
+                }
+            }
+            Err(err) => { println!("get root child failed: {} ", err) }
+        }
+
+        node
     }
 
 
@@ -113,7 +190,6 @@ impl SimpleCalculator {
 
         // 需要用花括号 , tokens.read 会返回借用，如果返回的 token 不结束，就不能再借用 tokens
         // 然后会报错 cannot borrow `*tokens` as mutable more than once at a time [E0499]
-        // 还可以把 let child2 = self.additive(tokens)?.ok_or(e)?; 移到这句代码上面，就不用花括号包裹了
         let token_text;
         {
             let token = tokens.read().unwrap();
@@ -152,11 +228,16 @@ impl SimpleCalculator {
             return Ok(child1);
         }
 
+        let token_text;
+        {
+            let token1 = tokens.read().unwrap();
+            token_text = token1.get_text().clone();
+        }
+
         let e = io::Error::new(io::ErrorKind::InvalidInput, "invalid additive expression, expecting the right part.");
-        let child2 = self.multiplicative(tokens)?.ok_or(e)?;
-        let token = tokens.read().unwrap();
-        let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token.get_text());
         let child1 = child1.unwrap();
+        let child2 = self.multiplicative(tokens)?.ok_or(e)?;
+        let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token_text);
 
         node.add_child(RefCell::new(Rc::new(child1)));
         node.add_child(RefCell::new(Rc::new(child2)));
@@ -172,7 +253,6 @@ impl SimpleCalculator {
             return Ok(None);
         }
 
-        let e = io::Error::new(io::ErrorKind::InvalidInput, "primary invalid tokens");
         let token = token.unwrap();
 
         match token.get_type() {
@@ -189,12 +269,12 @@ impl SimpleCalculator {
 
                 let node = self.additive(tokens)?;
                 if node.is_none() {
-                    return Err(e);
+                    return Err(simple_calculator::invalid_input_err("expecting an additive expression inside parenthesis"));
                 }
 
                 let token = tokens.peek();
                 if token.is_none() {
-                    return Err(e);
+                    return Err(simple_calculator::invalid_input_err("expecting right parenthesis"));
                 }
 
                 let token = token.unwrap();
@@ -203,11 +283,19 @@ impl SimpleCalculator {
                     return Ok(node);
                 }
 
-                Err(e)
+                Err(simple_calculator::invalid_input_err("expecting right parenthesis"))
             }
-            _ => Err(e)
+            _ => {
+                // invalid_input_err("unknown token type")
+                Err(simple_calculator::invalid_input_err("unknown token type"))
+            }
         }
     }
+}
+
+
+pub fn invalid_input_err(err: &str) -> io::Error {
+    io::Error::new(io::ErrorKind::InvalidInput, err)
 }
 
 
