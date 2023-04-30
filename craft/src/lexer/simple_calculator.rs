@@ -212,17 +212,8 @@ impl SimpleCalculator {
             return Ok(child1);
         }
 
-
-        // 需要用花括号 , tokens.read 会返回借用，如果返回的 token 不结束，就不能再借用 tokens
-        // 然后会报错 cannot borrow `*tokens` as mutable more than once at a time [E0499]
-        let token_text;
-        {
-            let token = tokens.read().unwrap();
-            token_text = token.get_text().clone();
-        }
-
         let e = io::Error::new(io::ErrorKind::InvalidInput, "invalid additive expression, expecting the right part.");
-        let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token_text);
+        let node = SimpleASTNode::new(ASTNodeType::Multiplicative, tokens.read().unwrap().get_text());
         let child1 = child1.unwrap();
         let child2 = self.additive(tokens)?.ok_or(e)?;
 
