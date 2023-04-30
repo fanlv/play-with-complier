@@ -1,7 +1,4 @@
-#![allow(unused)]
-
 use crate::lexer::{DfaState, Token, TokenReader, TokenType};
-use crate::lexer::TokenType::Plus;
 
 #[cfg(test)]
 mod tests {
@@ -46,10 +43,22 @@ mod tests {
         println!("parse = {}", script);
         let mut token_reader = lexer.tokenize(script);
         lexer.dump(&mut token_reader);
+
+
+        // let mut tokens: Vec<Box<dyn Token>> = Vec::new();
+        //
+        //
+        // let mut token_text = String::new();
+        // let token = SimpleToken::new();
+        //
+        // let res = init_token('a', &mut token_text, &mut tokens, token);
+        // let token = res.1;
+        //
+        // println!("tokens = {:?}", tokens.len());
+        // println!("token_text = {:?}", token_text);
+        // println!("token.text = {:?}", token.get_text());
     }
 }
-
-
 
 
 #[derive(Debug)]
@@ -78,18 +87,14 @@ impl SimpleLexer {
         while let Some(ch) = chars.next() {
             state = match state {
                 DfaState::Initial => {
-                    let x = init_token(ch, &mut token_text, &mut tokens, token);
-                    token = x.1;
-                    x.0
+                    init_token(ch, &mut token_text, &mut tokens, &mut token)
                 }
                 DfaState::Id => {
                     if ch.is_alphabetic() || ch.is_ascii_digit() {
                         token_text.push(ch);
                         DfaState::Id
                     } else {
-                        let x = init_token(ch, &mut token_text, &mut tokens, token);
-                        token = x.1;
-                        x.0
+                        init_token(ch, &mut token_text, &mut tokens, &mut token)
                     }
                 }
                 DfaState::GT => {
@@ -98,25 +103,19 @@ impl SimpleLexer {
                         token_text.push(ch);
                         DfaState::GE
                     } else {
-                        let x = init_token(ch, &mut token_text, &mut tokens, token);
-                        token = x.1;
-                        x.0
+                        init_token(ch, &mut token_text, &mut tokens, &mut token)
                     }
                 }
                 DfaState::GE | DfaState::Assignment | DfaState::Plus | DfaState::Minus | DfaState::Star |
                 DfaState::Slash | DfaState::SemiColon | DfaState::LeftParen | DfaState::RightParen => {
-                    let x = init_token(ch, &mut token_text, &mut tokens, token);
-                    token = x.1;
-                    x.0
+                    init_token(ch, &mut token_text, &mut tokens, &mut token)
                 }
                 DfaState::IntLiteral => {
                     if ch.is_ascii_digit() {
                         token_text.push(ch);
                         DfaState::IntLiteral
                     } else {
-                        let x = init_token(ch, &mut token_text, &mut tokens, token);
-                        token = x.1;
-                        x.0
+                        init_token(ch, &mut token_text, &mut tokens, &mut token)
                     }
                 }
                 DfaState::IdInt1 => {
@@ -124,9 +123,7 @@ impl SimpleLexer {
                         token_text.push(ch);
                         DfaState::IdInt2
                     } else {
-                        let x = init_token(ch, &mut token_text, &mut tokens, token);
-                        token = x.1;
-                        x.0
+                        init_token(ch, &mut token_text, &mut tokens, &mut token)
                     }
                 }
                 DfaState::IdInt2 => {
@@ -134,17 +131,13 @@ impl SimpleLexer {
                         token_text.push(ch);
                         DfaState::IdInt3
                     } else {
-                        let x = init_token(ch, &mut token_text, &mut tokens, token);
-                        token = x.1;
-                        x.0
+                        init_token(ch, &mut token_text, &mut tokens, &mut token)
                     }
                 }
                 DfaState::IdInt3 => {
                     if ch.is_ascii_whitespace() {
                         token.token_type = Some(TokenType::Int);
-                        let x = init_token(ch, &mut token_text, &mut tokens, token);
-                        token = x.1;
-                        x.0
+                        init_token(ch, &mut token_text, &mut tokens, &mut token)
                     } else {
                         token_text.push(ch);
                         DfaState::Id
@@ -155,8 +148,7 @@ impl SimpleLexer {
         }
 
         if !token_text.is_empty() {
-            let x = init_token('_', &mut token_text, &mut tokens, token);
-            token = x.1;
+            init_token('_', &mut token_text, &mut tokens, &mut token);
         }
 
         SimpleTokenReader::new(tokens)
@@ -176,13 +168,13 @@ impl SimpleLexer {
 fn init_token(ch: char,
               token_text: &mut String,
               tokens: &mut Vec<Box<dyn Token>>,
-              mut token: SimpleToken) -> (DfaState, SimpleToken) {
+              token: &mut SimpleToken) -> DfaState {
     if !token_text.is_empty() {
         token.text = token_text.clone();
-        tokens.push(Box::new(token));
+        tokens.push(Box::new(token.clone()));
 
         token_text.clear();
-        token = SimpleToken::new()
+        *token = SimpleToken::new()
     }
 
     let mut new_state = DfaState::Initial;
@@ -246,11 +238,12 @@ fn init_token(ch: char,
     }
 
 
-    (new_state, token)
+    new_state
 }
 
 
 // ------------------------- SimpleToken -------------------------
+#[derive(Clone, Debug)]
 pub struct SimpleToken {
     token_type: Option<TokenType>,
     text: String,

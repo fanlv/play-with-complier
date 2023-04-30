@@ -9,15 +9,18 @@ use crate::lexer::{ASTNode, ASTNodeType, TokenReader, TokenType};
 #[cfg(test)]
 mod tests {
     use crate::lexer::{simple_lexer, TokenReader};
+    use crate::lexer::simple_lexer::SimpleLexer;
 
     #[test]
     pub fn test() {
-        println!("Testing lexer");
+        let script = "int a = b+3";
+        println!("解析变量甚么语句: {}", script);
 
-        // let token: Option<simple_lexer::SimpleTokenReader> = None;
-        //
-        // let t = token.unwrap().peek();
-        println!("end")
+        let lexer = SimpleLexer::new();
+        let mut token_reader = lexer.tokenize(script);
+        lexer.dump(&mut token_reader);
+
+
     }
 }
 
