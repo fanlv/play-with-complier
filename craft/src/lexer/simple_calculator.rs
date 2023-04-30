@@ -104,7 +104,6 @@ impl SimpleCalculator {
             return Ok(child1);
         }
 
-        let e = io::Error::new(io::ErrorKind::InvalidInput, "multiplicative invalid tokens");
 
         let token = token.unwrap();
         if token.get_type() != TokenType::Plus && token.get_type() != TokenType::Minus {
@@ -121,6 +120,7 @@ impl SimpleCalculator {
             token_text = token.get_text().clone();
         }
 
+        let e = io::Error::new(io::ErrorKind::InvalidInput, "invalid additive expression, expecting the right part.");
         let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token_text);
         let child1 = child1.unwrap();
         let child2 = self.additive(tokens)?.ok_or(e)?;
@@ -147,12 +147,12 @@ impl SimpleCalculator {
             return Ok(child1);
         }
 
-        let e = io::Error::new(io::ErrorKind::InvalidInput, "multiplicative invalid tokens");
         let token = token.unwrap();
         if token.get_type() != TokenType::Star && token.get_type() != TokenType::Slash {
             return Ok(child1);
         }
 
+        let e = io::Error::new(io::ErrorKind::InvalidInput, "invalid additive expression, expecting the right part.");
         let child2 = self.multiplicative(tokens)?.ok_or(e)?;
         let token = tokens.read().unwrap();
         let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token.get_text());
