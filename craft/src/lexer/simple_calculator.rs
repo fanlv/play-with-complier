@@ -88,7 +88,7 @@ impl SimpleASTNode {
     }
 
     // 加法表达式
-    fn additive<T: TokenReader>(&self, tokens: &mut T) -> Result<SimpleASTNode, io::Error> {
+    fn additive<T: TokenReader>(&self, tokens: &mut T) -> Result<Option<SimpleASTNode>, io::Error> {
         let e = io::Error::new(io::ErrorKind::InvalidInput, "invalid input");
 
         let token = tokens.peek();
@@ -106,63 +106,67 @@ impl SimpleASTNode {
             |   IntLiteral Star multiplicativeExpression
             ;
     */
-    fn multiplicative<T: TokenReader>(&self, tokens: &mut T) -> Result<SimpleASTNode, io::Error> {
-        let child1 = self.primary(tokens)?;
+    fn multiplicative<T: TokenReader>(&self, tokens: &mut T) -> Result<Option<SimpleASTNode>, io::Error> {
         let e = io::Error::new(io::ErrorKind::InvalidInput, "invalid input");
-
+        let child1 = self.primary(tokens)?;
         let token = tokens.peek();
-        if token.is_none() {
-            return Err(e);
+
+        if child1.is_none() || token.is_none() {
+            return Ok(None);
         }
+
+        let child1 = child1.unwrap();
 
         let token = token.unwrap();
         if token.get_type() != TokenType::Star && token.get_type() != TokenType::Slash {
-            return Err(e);
+            return Ok(None);
         }
 
-        // 返回Token流中下一个Token，并从流中取出。 如果流已经为空，返回null;
-        // fn read(&mut self) -> Option<&Box<dyn Token>>;
-        let token = tokens.read();
-        if token.is_none() {
-            return Err(e);
+        // 需要用花括号 , tokens.read 会返回借用，如果返回的 token 不结束，就不能再借用 tokens
+        // 然后会报错 cannot borrow `*tokens` as mutable more than once at a time [E0499]
+        let token_text;
+        {
+            let token = tokens.read().unwrap();
+            token_text = token.get_text().clone();
         }
 
-        let token = token.unwrap();
+        let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token_text);
+        let child2 = self.multiplicative(tokens)?.ok_or(e)?;
 
-        let child2 = self.multiplicative(tokens)?;
-        let node = SimpleASTNode::new(ASTNodeType::Multiplicative, token.get_text());
+
         node.add_child(RefCell::new(Rc::new(child1)));
         node.add_child(RefCell::new(Rc::new(child2)));
-
-        // set_parent
-
-        match token.get_type() {
-            _ => Err(e)
-        }
+        // let node_rc = Rc::new(node);
+        // *child1.parent.borrow_mut() = Rc::downgrade(&node_rc);
+        Ok(Some(node))
     }
 
     // 语法解析：基础表达式
-    fn primary<T: TokenReader>(&self, tokens: &mut T) -> Result<SimpleASTNode, io::Error> {
-        let e = io::Error::new(io::ErrorKind::InvalidInput, "primary invalid tokens");
-
+    fn primary<T: TokenReader>(&self, tokens: &mut T) -> Result<Option<SimpleASTNode>, io::Error> {
         let token = tokens.peek();
         if token.is_none() {
-            return Err(e);
+            return Ok(None);
         }
 
+        let e = io::Error::new(io::ErrorKind::InvalidInput, "primary invalid tokens");
         let token = token.unwrap();
+
         match token.get_type() {
             TokenType::IntLiteral => { // 整型字面量
                 let token = tokens.read().unwrap();
-                Ok(SimpleASTNode::new(ASTNodeType::IntLiteral, token.get_text()))
+                Ok(Some(SimpleASTNode::new(ASTNodeType::IntLiteral, token.get_text())))
             }
             TokenType::Identifier => { // 变量名
                 let token = tokens.read().unwrap();
-                Ok(SimpleASTNode::new(ASTNodeType::Identifier, token.get_text()))
+                Ok(Some(SimpleASTNode::new(ASTNodeType::Identifier, token.get_text())))
             }
             TokenType::LeftParen => { // (
                 let token = tokens.read().unwrap(); // 消耗掉 (
+
                 let node = self.additive(tokens)?;
+                if node.is_none() {
+                    return Err(e);
+                }
 
                 let token = tokens.peek();
                 if token.is_none() {
@@ -171,7 +175,7 @@ impl SimpleASTNode {
 
                 let token = token.unwrap();
                 if token.get_type() == TokenType::RightParen {
-                    let token = tokens.read();
+                    let _ = tokens.read(); // 消耗掉 )
                     return Ok(node);
                 }
 
