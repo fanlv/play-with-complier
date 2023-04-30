@@ -9,52 +9,46 @@ use crate::lexer::{ASTNode, ASTNodeType, TokenReader, TokenType};
 #[cfg(test)]
 mod tests {
     use crate::lexer::{simple_lexer, TokenReader};
+    use crate::lexer::simple_calculator::SimpleCalculator;
     use crate::lexer::simple_lexer::SimpleLexer;
 
     #[test]
     pub fn test() {
-        let script = "int a = b+3";
+        let script = "int a = b+3;";
         println!("解析变量甚么语句: {}", script);
 
         let lexer = SimpleLexer::new();
         let mut token_reader = lexer.tokenize(script);
-        lexer.dump(&mut token_reader);
+        // lexer.dump(&mut token_reader);
 
-
+        let calculator = SimpleCalculator::new();
+        let node = calculator.int_declare(&mut token_reader);
+        match node {
+            Ok(value) => {
+                if value.is_none() {
+                    println!("value is none")
+                } else {
+                    value.unwrap().dump_ast("")
+                }
+            }
+            Err(error) => println!("Error: {}", error),
+        }
     }
 }
 
 
 struct SimpleCalculator {}
 
-
-pub struct SimpleASTNode {
-    // parent: RefCell<Weak<SimpleASTNode>>,
-    children: RefCell<Vec<Rc<SimpleASTNode>>>,
-    node_type: ASTNodeType,
-    text: String,
-}
-
-impl SimpleASTNode {
-    pub fn new(node_type: ASTNodeType, text: &str) -> Self {
-        SimpleASTNode {
-            // parent: RefCell::new(Weak::new()),
-            children: RefCell::new(Vec::new()),
-            node_type,
-            text: text.to_string(),
-        }
+impl SimpleCalculator {
+    fn new() -> SimpleCalculator {
+        SimpleCalculator {}
     }
 
-    pub fn add_child(&self, child: RefCell<Rc<SimpleASTNode>>) {
-        let mut child = child.borrow_mut();
-        // let rc_node = Rc::new(self);
-        // *child.parent.borrow_mut() = Rc::downgrade(&rc_node);
-        self.children.borrow_mut().push(child.clone());
+    fn demo() -> Result<i32, io::Error> {
+        let e = io::Error::new(io::ErrorKind::InvalidInput, "variable name expected");
+        return Err(e);
     }
 
-    // pub fn set_parent(parent: &Rc<SimpleASTNode>, child: &SimpleASTNode) {
-    //     *child.parent.borrow_mut() = Rc::downgrade(parent);
-    // }
 
     fn int_declare<T: TokenReader>(&self, tokens: &mut T) -> Result<Option<SimpleASTNode>, io::Error> {
         let token = tokens.peek();
@@ -100,6 +94,7 @@ impl SimpleASTNode {
 
         Ok(Some(node))
     }
+
 
     // 加法表达式
     fn additive<T: TokenReader>(&self, tokens: &mut T) -> Result<Option<SimpleASTNode>, io::Error> {
@@ -215,6 +210,43 @@ impl SimpleASTNode {
     }
 }
 
+
+pub struct SimpleASTNode {
+    // parent: RefCell<Weak<SimpleASTNode>>,
+    children: RefCell<Vec<Rc<SimpleASTNode>>>,
+    node_type: ASTNodeType,
+    text: String,
+}
+
+impl SimpleASTNode {
+    pub fn new(node_type: ASTNodeType, text: &str) -> Self {
+        SimpleASTNode {
+            // parent: RefCell::new(Weak::new()),
+            children: RefCell::new(Vec::new()),
+            node_type,
+            text: text.to_string(),
+        }
+    }
+
+    pub fn add_child(&self, child: RefCell<Rc<SimpleASTNode>>) {
+        let mut child = child.borrow_mut();
+        // let rc_node = Rc::new(self);
+        // *child.parent.borrow_mut() = Rc::downgrade(&rc_node);
+        self.children.borrow_mut().push(child.clone());
+    }
+
+    // pub fn set_parent(parent: &Rc<SimpleASTNode>, child: &SimpleASTNode) {
+    //     *child.parent.borrow_mut() = Rc::downgrade(parent);
+    // }
+
+    fn dump_ast(&self, indent: &str) {
+        println!("{} {} {}", indent, self.get_text(), self.get_type());
+        for child in self.get_children().iter() {
+            child.dump_ast(format!("{}\t", indent).as_str());
+        }
+    }
+}
+
 impl ASTNode for SimpleASTNode {
     // fn get_parent(&self) -> Option<Rc<SimpleASTNode>> {
     //     self.parent.borrow().upgrade()
@@ -233,9 +265,9 @@ impl ASTNode for SimpleASTNode {
     }
 }
 
-fn dump_ast<T: ASTNode>(node: &T, indent: &str) {
-    println!("{} {} {}", indent, node.get_text(), node.get_type());
-    for child in node.get_children().iter() {
-        dump_ast(child.as_ref(), indent);
-    }
-}
+// fn dump_ast<T: ASTNode>(node: &T, indent: &str) {
+//     println!("{} {} {}", indent, node.get_text(), node.get_type());
+//     for child in node.get_children().iter() {
+//         dump_ast(child.as_ref(), indent);
+//     }
+// }
