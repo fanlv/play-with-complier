@@ -1,9 +1,12 @@
+#![allow(unused)]
+
+use lexer::simple_calculator;
 use lexer::simple_lexer;
 
 mod lexer;
 
 fn main() {
-    simple_lexer::test();
+    // simple_lexer::test();
 }
 
 //

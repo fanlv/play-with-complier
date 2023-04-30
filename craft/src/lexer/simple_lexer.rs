@@ -1,59 +1,55 @@
+#![allow(unused)]
+
 use crate::lexer::{DfaState, Token, TokenReader, TokenType};
 use crate::lexer::TokenType::Plus;
 
-pub fn test() {
-    let lexer = SimpleLexer::new();
-    let script = "int age = 45;";
-    println!("parse = {}", script);
-    let mut token_reader = lexer.tokenize(script);
-    lexer.dump(&mut token_reader);
+#[cfg(test)]
+mod tests {
+    use super::SimpleLexer;
 
-    let lexer = SimpleLexer::new();
-    let script = "inta age = 45;";
-    println!("parse = {}", script);
-    let mut token_reader = lexer.tokenize(script);
-    lexer.dump(&mut token_reader);
+    #[test]
+    pub fn test() {
+        let lexer = SimpleLexer::new();
+        let script = "int age = 45;";
+        println!("parse = {}", script);
+        let mut token_reader = lexer.tokenize(script);
+        lexer.dump(&mut token_reader);
 
-    let lexer = SimpleLexer::new();
-    let script = "in age = 45;";
-    println!("parse = {}", script);
-    let mut token_reader = lexer.tokenize(script);
-    lexer.dump(&mut token_reader);
+        let lexer = SimpleLexer::new();
+        let script = "inta age = 45;";
+        println!("parse = {}", script);
+        let mut token_reader = lexer.tokenize(script);
+        lexer.dump(&mut token_reader);
 
-
-    let lexer = SimpleLexer::new();
-    let script = "age >= 45;";
-    println!("parse = {}", script);
-    let mut token_reader = lexer.tokenize(script);
-    lexer.dump(&mut token_reader);
+        let lexer = SimpleLexer::new();
+        let script = "in age = 45;";
+        println!("parse = {}", script);
+        let mut token_reader = lexer.tokenize(script);
+        lexer.dump(&mut token_reader);
 
 
-    let lexer = SimpleLexer::new();
-    let script = "age > 45;";
-    println!("parse = {}", script);
-    let mut token_reader = lexer.tokenize(script);
-    lexer.dump(&mut token_reader);
-
-    let lexer = SimpleLexer::new();
-    let script = "2+3*5";
-    println!("parse = {}", script);
-    let mut token_reader = lexer.tokenize(script);
-    lexer.dump(&mut token_reader);
+        let lexer = SimpleLexer::new();
+        let script = "age >= 45;";
+        println!("parse = {}", script);
+        let mut token_reader = lexer.tokenize(script);
+        lexer.dump(&mut token_reader);
 
 
-    // let mut tokens: Vec<Box<dyn Token>> = Vec::new();
-    // 
-    // 
-    // let mut token_text = String::new();
-    // let token = SimpleToken::new();
-    // 
-    // let res = init_token('a', &mut token_text, &mut tokens, token);
-    // let token = res.1;
-    // 
-    // println!("tokens = {:?}", tokens.len());
-    // println!("token_text = {:?}", token_text);
-    // println!("token.text = {:?}", token.get_text());
+        let lexer = SimpleLexer::new();
+        let script = "age > 45;";
+        println!("parse = {}", script);
+        let mut token_reader = lexer.tokenize(script);
+        lexer.dump(&mut token_reader);
+
+        let lexer = SimpleLexer::new();
+        let script = "2+3*5";
+        println!("parse = {}", script);
+        let mut token_reader = lexer.tokenize(script);
+        lexer.dump(&mut token_reader);
+    }
 }
+
+
 
 
 #[derive(Debug)]
@@ -252,8 +248,6 @@ fn init_token(ch: char,
 
     (new_state, token)
 }
-
-// 这段代码报错 use of moved value: `token1`，帮我fix一下
 
 
 // ------------------------- SimpleToken -------------------------
