@@ -2,11 +2,14 @@
 
 use lexer::simple_calculator;
 use lexer::simple_lexer;
+use lexer::simple_script;
 
 mod lexer;
 
 fn main() {
     // simple_lexer::test();
+
+    simple_script::script_demo();
 }
 
 //

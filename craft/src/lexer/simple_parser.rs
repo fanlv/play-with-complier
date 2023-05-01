@@ -57,16 +57,16 @@ mod tests {
 }
 
 
-struct SimpleParser {}
+pub struct SimpleParser {}
 
 impl SimpleParser {
-    fn new() -> SimpleParser {
+    pub fn new() -> SimpleParser {
         SimpleParser {}
     }
 
 
     // 解析脚本，并返回根节点
-    fn parse(&self, code: &str) -> Result<SimpleASTNode, io::Error> {
+    pub fn parse(&self, code: &str) -> Result<SimpleASTNode, io::Error> {
         let lexer = simple_lexer::SimpleLexer::new();
         let mut tokens = lexer.tokenize(code);
         self.get_root(&mut tokens)
@@ -213,10 +213,10 @@ impl SimpleParser {
 
         loop {
             let token = tokens.peek();
-            if !token.is_none() {
-                let token_text = token.unwrap().get_text();
-                println!("additive - loop - token_text : {}", token_text);
-            }
+            // if !token.is_none() {
+            //     let token_text = token.unwrap().get_text();
+            //     println!("additive - loop - token_text : {}", token_text);
+            // }
 
 
             if token.is_none() || (token.unwrap().get_type() != TokenType::Plus &&
@@ -280,7 +280,7 @@ impl SimpleParser {
 
         let token = token.unwrap();
         let txt = token.get_text();
-        println!("primary token {}", txt);
+        // println!("primary token {}", txt);
         match token.get_type() {
             TokenType::IntLiteral => { // 整型字面量
                 let token = tokens.read().unwrap();

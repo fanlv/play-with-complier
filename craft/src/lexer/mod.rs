@@ -9,6 +9,7 @@ use simple_calculator::SimpleASTNode;
 pub mod simple_lexer;
 pub mod simple_calculator;
 pub mod simple_parser;
+pub mod simple_script;
 
 
 pub trait Token {
@@ -126,7 +127,7 @@ pub trait ASTNode {
     fn get_text(&self) -> &str;
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum ASTNodeType {
     /// 程序入口，根节点
     Program,
