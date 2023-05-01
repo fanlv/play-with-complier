@@ -8,6 +8,7 @@ use simple_calculator::SimpleASTNode;
 
 pub mod simple_lexer;
 pub mod simple_calculator;
+pub mod simple_parser;
 
 
 pub trait Token {

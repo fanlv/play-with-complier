@@ -343,8 +343,8 @@ impl SimpleASTNode {
     //     *child.parent.borrow_mut() = Rc::downgrade(parent);
     // }
 
-    fn dump_ast(&self, indent: &str) {
-        println!("{}{} {}", indent, self.get_text(), self.get_type());
+    pub fn dump_ast(&self, indent: &str) {
+        println!("{}{} {}", indent, self.get_type(), self.get_text());
         for child in self.get_children().iter() {
             child.dump_ast(format!("{}\t", indent).as_str());
         }
