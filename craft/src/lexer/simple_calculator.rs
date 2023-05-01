@@ -42,19 +42,24 @@ mod tests {
         // let mut token_reader = lexer.tokenize(script);
         // lexer.dump(&mut token_reader);
 
-        let script = "2+3*5";
-        println!("计算：{} ", script);
-        calculator.evaluate(script);
+        // let script = "2+3*5";
+        // println!("计算：{} ", script);
+        // calculator.evaluate(script);
+        //
+        //
+        // let script = "2+";
+        // println!("计算：{} ", script);
+        // calculator.evaluate(script);
+
+        // let script = "2-1-5*3";
+        // println!("计算：{} ", script);
+        // calculator.evaluate(script);
 
 
-        let script = "2+";
-        println!("计算：{} ", script);
-        calculator.evaluate(script);
-
-        let script = "2+3+4";
-        println!("计算：{} ", script);
-        calculator.evaluate(script);
-
+        // let script = "2+3+4";
+        // println!("计算：{} ", script);
+        // calculator.evaluate(script);
+        //
         let script = "1+2+3+4+5*6+8+9+10";
         println!("计算：{} ", script);
         calculator.evaluate(script);
