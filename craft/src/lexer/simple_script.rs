@@ -34,7 +34,7 @@ pub fn script_demo() {
     println!("Simple script language!");
 
     let parser = SimpleParser::new();
-    let script = SimpleScript::new(v);
+    let mut script = SimpleScript::new(v);
 
     let mut code = String::new();
 
@@ -85,20 +85,19 @@ pub fn script_demo() {
 
 
 struct SimpleScript {
-    // variables: HashMap<String, i32>,
-    variables: RefCell<HashMap<String, i32>>,
+    variables: HashMap<String, i32>,
     verbose: bool,
 }
 
 impl SimpleScript {
     fn new(verbose: bool) -> Self {
         SimpleScript {
-            variables: RefCell::new(HashMap::new()),
+            variables: HashMap::new(),
             verbose,
         }
     }
 
-    fn evaluate<T: ASTNode>(&self, node: &Rc<T>, indent: &str) -> Result<i32, io::Error> {
+    fn evaluate<T: ASTNode>(&mut self, node: &Rc<T>, indent: &str) -> Result<i32, io::Error> {
         if self.verbose {
             println!("{}Calculating: {}", indent, node.get_type())
         }
@@ -136,9 +135,9 @@ impl SimpleScript {
             }
             ASTNodeType::Identifier => {
                 let var_name = node.get_text();
-                let variables = self.variables.borrow();
-                if variables.contains_key(var_name) {
-                    let v = variables.get(var_name).unwrap();
+
+                if self.variables.contains_key(var_name) {
+                    let v = self.variables.get(var_name).unwrap();
 
                     result = *v;
                 } else {
@@ -147,15 +146,11 @@ impl SimpleScript {
             }
             ASTNodeType::AssignmentStmt | ASTNodeType::IntDeclaration => {
                 let var_name = node.get_text();
-                {
-                    let mut variables = self.variables.borrow_mut(); // 1. 这里借用了一次。
-                    let node_type = node.get_type();
-                    if node_type == ASTNodeType::AssignmentStmt && !variables.contains_key(var_name) {
-                        let msg = format!("you dont define variable {}", var_name);
-                        return Err(simple_calculator::invalid_input_err(msg.as_str()));
-                    }
-                } // 3. 所以这里，需要用花括号，让上面借用出了这个代码块以后失效，不然下面再次借用会panic。
-
+                let node_type = node.get_type();
+                if node_type == ASTNodeType::AssignmentStmt && !self.variables.contains_key(var_name) {
+                    let msg = format!("you dont define variable {}", var_name);
+                    return Err(simple_calculator::invalid_input_err(msg.as_str()));
+                }
 
                 let mut child_result = 0;
                 let children = node.get_children();
@@ -166,8 +161,8 @@ impl SimpleScript {
                     child_result = result
                 }
 
-                let mut variables = self.variables.borrow_mut();
-                variables.insert(var_name.to_string(), child_result);
+
+                self.variables.insert(var_name.to_string(), child_result);
             }
             _ => ()
         }
