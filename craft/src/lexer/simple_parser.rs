@@ -1,15 +1,11 @@
 use std::cell::{Ref, RefCell, RefMut};
-use std::error::Error;
 use std::io;
-use std::ops::Deref;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 use std::str::FromStr;
 
-use crate::lexer::{ASTNode, ASTNodeType, simple_lexer, TokenReader, TokenType};
+use crate::lexer::{ASTNodeType, simple_lexer, TokenReader, TokenType};
 use crate::simple_calculator;
 use crate::simple_calculator::SimpleASTNode;
-
-// use crate::simple_calculator::invalid_input_err;
 
 #[cfg(test)]
 mod tests {

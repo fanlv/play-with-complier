@@ -12,7 +12,6 @@ use crate::lexer::simple_calculator::SimpleASTNode;
 use crate::lexer::simple_parser::SimpleParser;
 
 pub fn script_demo() {
-    println!("abc");
     // 使用 `env::args()` 获取命令行参数
     let args: Vec<String> = env::args().collect();
 
